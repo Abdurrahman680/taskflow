@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String       @id @default(uuid())
+  name         String
+  email        String       @unique
+  passwordHash String
+  createdAt    DateTime     @default(now())
+  createdTeams Team[]       @relation("CreatedTeams")
+  memberships  TeamMember[]
+  tasksCreated Task[]       @relation("TasksCreated")
+  tasksAssigned Task[]      @relation("TasksAssigned")
+}
+
+model Team {
+  id          String       @id @default(uuid())
+  name        String
+  description String?
+  createdBy   String
+  creator     User         @relation("CreatedTeams", fields: [createdBy], references: [id])
+  createdAt   DateTime     @default(now())
+  members     TeamMember[]
+  tasks       Task[]
+}
+
+model TeamMember {
+  id       String   @id @default(uuid())
+  teamId   String
+  userId   String
+  joinedAt DateTime @default(now())
+  team     Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+}
+
+model Task {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  status      String   @default("Pending")
+  priority    String   @default("Medium")
+  dueDate     DateTime?
+  teamId      String
+  assignedTo  String?
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  assignee    User?    @relation("TasksAssigned", fields: [assignedTo], references: [id], onDelete: SetNull)
+  creator     User     @relation("TasksCreated", fields: [createdBy], references: [id])
+}
+
+model session {
+  sid    String   @id @db.VarChar
+  sess   Json     @db.Json
+  expire DateTime @db.Timestamp(6)
+
+  @@index([expire], map: "IDX_session_expire")
+}
