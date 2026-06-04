@@ -14,25 +14,26 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 
 // ======================
-// CORS CONFIG (FIXED STABLE)
+// IMPORTANT FOR RAILWAY
+// ======================
+app.set('trust proxy', 1);   // 🔥 VERY IMPORTANT FIX
+
+// ======================
+// CORS
 // ======================
 app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "http://localhost:3000",
-    "https://taskflow-d44dd.web.app"
-  ],
+  origin: "https://taskflow-d44dd.web.app",
   credentials: true
 }));
 
 // ======================
-// BODY PARSERS
+// BODY PARSER
 // ======================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ======================
-// SESSION CONFIG (FIX LOGIN FIX)
+// SESSION FIX (CRITICAL)
 // ======================
 app.use(session({
   secret: process.env.SESSION_SECRET || 'secret',
@@ -40,9 +41,9 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    secure: true,          // MUST for Railway (HTTPS)
-    sameSite: "none",      // IMPORTANT for cross-domain (Firebase)
-    maxAge: 1000 * 60 * 60 * 24 // 1 day
+    secure: true,
+    sameSite: "none",
+    maxAge: 1000 * 60 * 60 * 24
   }
 }));
 
@@ -68,7 +69,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // ======================
-// ERROR HANDLING
+// ERROR HANDLER
 // ======================
 app.use((err, req, res, next) => {
   console.error(err.stack);
