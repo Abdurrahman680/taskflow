@@ -110,57 +110,59 @@ export default function Tasks({ user }) {
       </div>
 
       <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
-        <table className="w-full text-left">
-          <thead className="bg-gray-700/50 border-b border-gray-700">
-            <tr>
-              <th className="px-6 py-4 text-gray-300 font-semibold">Task</th>
-              <th className="px-6 py-4 text-gray-300 font-semibold">Status</th>
-              <th className="px-6 py-4 text-gray-300 font-semibold">Priority</th>
-              <th className="px-6 py-4 text-gray-300 font-semibold cursor-pointer hover:text-white flex items-center gap-2" onClick={toggleSort}>
-                Due Date <ArrowUpDown size={14} />
-              </th>
-              <th className="px-6 py-4 text-gray-300 font-semibold text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-700">
-            {tasks.map(task => (
-              <tr key={task.id} className="hover:bg-gray-700/30 transition">
-                <td className="px-6 py-4">
-                  <p className="font-medium text-white">{task.title}</p>
-                  <p className="text-sm text-gray-400 truncate max-w-xs">{task.description}</p>
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`text-xs px-2 py-1 rounded-full ${task.status === 'Completed' ? 'bg-green-500/20 text-green-400' : task.status === 'In Progress' ? 'bg-blue-500/20 text-blue-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
-                    {task.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`text-sm ${task.priority === 'High' ? 'text-red-400' : task.priority === 'Medium' ? 'text-yellow-400' : 'text-green-400'}`}>
-                    {task.priority}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-gray-300 text-sm">
-                  {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No Date'}
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <button onClick={() => { setEditingTask(task); setShowModal(true); }} className="text-gray-400 hover:text-blue-400 p-2 transition">
-                    <Edit size={18} />
-                  </button>
-                  <button onClick={() => handleDelete(task.id)} className="text-gray-400 hover:text-red-400 p-2 transition">
-                    <Trash2 size={18} />
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {tasks.length === 0 && (
+        <div className="overflow-x-auto">
+          <table className="w-full text-left min-w-[650px]">
+            <thead className="bg-gray-700/50 border-b border-gray-700">
               <tr>
-                <td colSpan="5" className="px-6 py-12 text-center text-gray-500">
-                  No tasks found matching your criteria.
-                </td>
+                <th className="px-6 py-4 text-gray-300 font-semibold">Task</th>
+                <th className="px-6 py-4 text-gray-300 font-semibold">Status</th>
+                <th className="px-6 py-4 text-gray-300 font-semibold">Priority</th>
+                <th className="px-6 py-4 text-gray-300 font-semibold cursor-pointer hover:text-white flex items-center gap-2" onClick={toggleSort}>
+                  Due Date <ArrowUpDown size={14} />
+                </th>
+                <th className="px-6 py-4 text-gray-300 font-semibold text-right">Actions</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-gray-700">
+              {tasks.map(task => (
+                <tr key={task.id} className="hover:bg-gray-700/30 transition">
+                  <td className="px-6 py-4">
+                    <p className="font-medium text-white">{task.title}</p>
+                    <p className="text-sm text-gray-400 truncate max-w-xs">{task.description}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`text-xs px-2 py-1 rounded-full ${task.status === 'Completed' ? 'bg-green-500/20 text-green-400' : task.status === 'In Progress' ? 'bg-blue-500/20 text-blue-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
+                      {task.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`text-sm ${task.priority === 'High' ? 'text-red-400' : task.priority === 'Medium' ? 'text-yellow-400' : 'text-green-400'}`}>
+                      {task.priority}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-gray-300 text-sm">
+                    {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No Date'}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <button onClick={() => { setEditingTask(task); setShowModal(true); }} className="text-gray-400 hover:text-blue-400 p-2 transition">
+                      <Edit size={18} />
+                    </button>
+                    <button onClick={() => handleDelete(task.id)} className="text-gray-400 hover:text-red-400 p-2 transition">
+                      <Trash2 size={18} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {tasks.length === 0 && (
+                <tr>
+                  <td colSpan="5" className="px-6 py-12 text-center text-gray-500">
+                    No tasks found matching your criteria.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {showModal && (
