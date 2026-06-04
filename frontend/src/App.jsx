@@ -7,6 +7,7 @@ import Register from './pages/Register';
 import Teams from './pages/Teams';
 import Tasks from './pages/Tasks';
 import TeamTasks from './pages/TeamTasks';
+import LandingPage from './pages/LandingPage';
 import api from './services/api';
 
 function App() {
@@ -23,18 +24,28 @@ function App() {
   if (loading) return <div className="flex h-screen items-center justify-center bg-gray-900 text-white">Loading...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen bg-gray-900 text-white font-sans">
       <Routes>
-        <Route path="/login" element={!user ? <Login setUser={setUser} /> : <Navigate to="/" />} />
-        <Route path="/register" element={!user ? <Register setUser={setUser} /> : <Navigate to="/" />} />
-        
-        {/* Protected Routes wrapped in Layout */}
-        <Route path="/" element={user ? <Layout user={user} setUser={setUser} /> : <Navigate to="/login" />}>
-          <Route index element={<Dashboard user={user} />} />
-          <Route path="teams" element={<Teams user={user} />} />
-          <Route path="teams/:id" element={<TeamTasks user={user} />} />
-          <Route path="tasks" element={<Tasks user={user} />} />
-        </Route>
+        {user ? (
+          // Protected Workspace Routes for Logged In Users
+          <Route path="/" element={<Layout user={user} setUser={setUser} />}>
+            <Route index element={<Dashboard user={user} />} />
+            <Route path="teams" element={<Teams user={user} />} />
+            <Route path="teams/:id" element={<TeamTasks user={user} />} />
+            <Route path="tasks" element={<Tasks user={user} />} />
+            {/* Fallback to dashboard root for logged in users */}
+            <Route path="*" element={<Navigate to="/" />} />
+          </Route>
+        ) : (
+          // Public Marketing and Authentication Routes for Guests
+          <>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<Login setUser={setUser} />} />
+            <Route path="/register" element={<Register setUser={setUser} />} />
+            {/* Direct guest subpaths to login screen */}
+            <Route path="*" element={<Navigate to="/login" />} />
+          </>
+        )}
       </Routes>
     </div>
   );
