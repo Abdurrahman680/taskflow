@@ -10,6 +10,7 @@ api.interceptors.response.use(
   error => {
     if (error.response && error.response.status === 401) {
       if (
+        window.location.pathname !== '/' &&
         window.location.pathname !== '/login' &&
         window.location.pathname !== '/register'
       ) {
