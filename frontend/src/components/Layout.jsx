@@ -8,6 +8,7 @@ export default function Layout({ user, setUser }) {
 
   const handleLogout = async () => {
     await api.post('/auth/logout');
+    sessionStorage.removeItem('notified_due_tasks');
     setUser(null);
     navigate('/login');
   };

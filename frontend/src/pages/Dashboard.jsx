@@ -5,9 +5,32 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 export default function Dashboard({ user }) {
   const [tasks, setTasks] = useState([]);
+  const [showReminderModal, setShowReminderModal] = useState(false);
+  const [dueSoonTasks, setDueSoonTasks] = useState([]);
 
   useEffect(() => {
-    api.get('/tasks').then(res => setTasks(res.data));
+    api.get('/tasks').then(res => {
+      setTasks(res.data);
+      
+      const alreadyNotified = sessionStorage.getItem('notified_due_tasks');
+      if (!alreadyNotified) {
+        const today = new Date();
+        const threeDaysFromNow = new Date();
+        threeDaysFromNow.setDate(today.getDate() + 3);
+
+        const urgent = res.data.filter(t => {
+          if (t.status === 'Completed' || !t.dueDate) return false;
+          const dDate = new Date(t.dueDate);
+          return dDate < threeDaysFromNow;
+        });
+
+        if (urgent.length > 0) {
+          setDueSoonTasks(urgent);
+          setShowReminderModal(true);
+        }
+        sessionStorage.setItem('notified_due_tasks', 'true');
+      }
+    });
   }, []);
 
   const pendingTasks = tasks.filter(t => t.status !== 'Completed');
@@ -140,6 +163,76 @@ export default function Dashboard({ user }) {
           </div>
         </div>
       </div>
+
+      {/* Due Date Reminders Modal (Login Only) */}
+      {showReminderModal && (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+          <div className="bg-gray-800 border border-red-500/30 rounded-xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all scale-100">
+            <div className="p-6 bg-gradient-to-r from-red-600/20 to-yellow-600/10 border-b border-gray-700 flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-red-500/20 text-red-400 rounded-lg animate-pulse">
+                  <AlertTriangle size={24} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-white">Upcoming Deadlines!</h2>
+                  <p className="text-xs text-gray-400">Tasks requiring your immediate attention</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowReminderModal(false)}
+                className="text-gray-400 hover:text-white transition text-2xl"
+              >
+                &times;
+              </button>
+            </div>
+            
+            <div className="p-6 max-h-[60vh] overflow-y-auto space-y-4">
+              <p className="text-gray-300 text-sm">
+                Hello {user?.name}! The following tasks are overdue or due within the next 3 days:
+              </p>
+              <ul className="space-y-3">
+                {dueSoonTasks.map(t => {
+                  const isOverdue = new Date(t.dueDate) < new Date();
+                  return (
+                    <li key={t.id} className="p-4 bg-gray-700/40 border border-gray-600/60 hover:border-gray-500 rounded-lg transition-colors flex justify-between items-center">
+                      <div>
+                        <h4 className="font-semibold text-white">{t.title}</h4>
+                        <div className="flex gap-2 items-center mt-1">
+                          <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${
+                            t.priority === 'High' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                            t.priority === 'Medium' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
+                            'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                          }`}>
+                            {t.priority}
+                          </span>
+                          <span className="text-xs text-gray-400">Team: {t.team?.name || 'Personal'}</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className={`text-xs font-semibold px-2 py-1 rounded ${
+                          isOverdue ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                        }`}>
+                          {isOverdue ? 'Overdue' : new Date(t.dueDate).toLocaleDateString()}
+                        </span>
+                        <p className="text-[10px] text-gray-400 mt-1.5">Status: {t.status}</p>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+            
+            <div className="p-6 bg-gray-900/50 border-t border-gray-700 flex justify-end">
+              <button 
+                onClick={() => setShowReminderModal(false)}
+                className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-semibold rounded-lg shadow-md transition-all duration-200"
+              >
+                Acknowledge & Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

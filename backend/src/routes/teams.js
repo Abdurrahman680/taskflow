@@ -52,6 +52,12 @@ router.post('/:id/members', ensureAuth, async (req, res) => {
   const { userId } = req.body;
   const teamId = req.params.id;
 
+  const team = await prisma.team.findUnique({ where: { id: teamId } });
+  if (!team) return res.status(404).json({ message: 'Team not found' });
+  if (team.createdBy !== req.user.id) {
+    return res.status(403).json({ message: 'Only the team creator can add members' });
+  }
+
   const existingMember = await prisma.teamMember.findFirst({
     where: { teamId, userId }
   });
@@ -66,6 +72,64 @@ router.post('/:id/members', ensureAuth, async (req, res) => {
 
   res.status(201).json(member);
 });
+
+router.post('/:id/invite', ensureAuth, async (req, res) => {
+  const { email } = req.body;
+  const teamId = req.params.id;
+
+  if (!email) {
+    return res.status(400).json({ message: 'Email is required' });
+  }
+
+  const team = await prisma.team.findUnique({ where: { id: teamId } });
+  if (!team) return res.status(404).json({ message: 'Team not found' });
+  if (team.createdBy !== req.user.id) {
+    return res.status(403).json({ message: 'Only the team creator can invite members' });
+  }
+
+  // Find user by email
+  const user = await prisma.user.findUnique({ where: { email } });
+
+  if (user) {
+    // Check if user is already a member
+    const existingMember = await prisma.teamMember.findFirst({
+      where: { teamId, userId: user.id }
+    });
+
+    if (existingMember) {
+      return res.status(400).json({ message: 'User is already a member of this team' });
+    }
+
+    // Add them to the team and simulate email
+    await prisma.teamMember.create({
+      data: { teamId, userId: user.id }
+    });
+
+    console.log(`\n========================================`);
+    console.log(`[SMTP STUB] Sending team invitation email:`);
+    console.log(`To: ${email}`);
+    console.log(`Subject: You have been added to team "${team.name}"`);
+    console.log(`Message: Hi ${user.name || 'there'}, you have been added to the team "${team.name}" on TaskFlow by ${req.user.name}.`);
+    console.log(`========================================\n`);
+
+    return res.status(200).json({ 
+      message: `User ${email} was found and successfully added to the team. Simulated invitation email sent!` 
+    });
+  } else {
+    // User does not exist, simulate registration invite
+    console.log(`\n========================================`);
+    console.log(`[SMTP STUB] Sending external team invitation email:`);
+    console.log(`To: ${email}`);
+    console.log(`Subject: Invite to join team "${team.name}" on TaskFlow`);
+    console.log(`Message: You have been invited to join the team "${team.name}" on TaskFlow by ${req.user.name}. Click here to register: http://localhost:5173/register?inviteTeam=${teamId}`);
+    console.log(`========================================\n`);
+
+    return res.status(200).json({ 
+      message: `Invitation email simulated and sent to non-registered user ${email}. They will need to register first.` 
+    });
+  }
+});
+
 
 router.get('/:id/members', ensureAuth, async (req, res) => {
   const members = await prisma.teamMember.findMany({

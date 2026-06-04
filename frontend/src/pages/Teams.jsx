@@ -11,6 +11,7 @@ export default function Teams({ user }) {
   
   const [teamForm, setTeamForm] = useState({ id: null, name: '', description: '' });
   const [selectedUserId, setSelectedUserId] = useState('');
+  const [inviteEmail, setInviteEmail] = useState('');
   const [allUsers, setAllUsers] = useState([]);
 
   const fetchTeams = () => {
@@ -55,6 +56,21 @@ export default function Teams({ user }) {
       alert(err.response?.data?.message || 'Failed to add member');
     }
   };
+
+  const handleInviteByEmail = async (e) => {
+    e.preventDefault();
+    if (!inviteEmail) return alert('Please enter an email address');
+    try {
+      const res = await api.post(`/teams/${activeTeamId}/invite`, { email: inviteEmail });
+      alert(res.data.message);
+      setShowInviteModal(false);
+      setInviteEmail('');
+      fetchTeams();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to send invite');
+    }
+  };
+
 
   return (
     <div>
@@ -110,21 +126,23 @@ export default function Teams({ user }) {
                 {team.members?.length > 5 && <span className="text-xs text-gray-500">+{team.members.length - 5} more</span>}
               </div>
               <div className="flex gap-2 mt-2">
-                <button 
-                  onClick={() => { 
-                    setActiveTeamId(team.id); 
-                    setShowInviteModal(true);
-                    api.get('/auth/users')
-                      .then(res => setAllUsers(Array.isArray(res.data) ? res.data : []))
-                      .catch(() => alert('Failed to fetch users'));
-                  }}
-                  className="flex-1 flex items-center justify-center gap-2 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm text-gray-200 transition"
-                >
-                  <UserPlus size={16} /> Add Member
-                </button>
+                {team.createdBy === user.id && (
+                  <button 
+                    onClick={() => { 
+                      setActiveTeamId(team.id); 
+                      setShowInviteModal(true);
+                      api.get('/auth/users')
+                        .then(res => setAllUsers(Array.isArray(res.data) ? res.data : []))
+                        .catch(() => alert('Failed to fetch users'));
+                    }}
+                    className="flex-1 flex items-center justify-center gap-2 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm text-gray-200 transition"
+                  >
+                    <UserPlus size={16} /> Add Member
+                  </button>
+                )}
                 <Link
                   to={`/teams/${team.id}`}
-                  className="flex-1 flex items-center justify-center gap-2 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm text-white transition"
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm text-white transition ${team.createdBy !== user.id ? 'w-full' : ''}`}
                 >
                   View Tasks
                 </Link>
@@ -205,8 +223,20 @@ export default function Teams({ user }) {
               <div className="mt-4 pt-4 border-t border-gray-700">
                 <label className="block text-sm font-medium text-gray-300 mb-2">Or Invite by Email</label>
                 <div className="flex gap-2">
-                  <input type="email" placeholder="colleague@example.com" className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  <button type="button" onClick={() => { alert('Invite sent! (Stubbed)'); setShowInviteModal(false); }} className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-white text-sm transition whitespace-nowrap">Send Invite</button>
+                  <input 
+                    type="email" 
+                    placeholder="colleague@example.com" 
+                    className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                    value={inviteEmail}
+                    onChange={e => setInviteEmail(e.target.value)}
+                  />
+                  <button 
+                    type="button" 
+                    onClick={handleInviteByEmail} 
+                    className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-white text-sm transition whitespace-nowrap"
+                  >
+                    Send Invite
+                  </button>
                 </div>
                 <p className="text-xs text-gray-500 mt-2">This will send an email invitation. (Stubbed for demo)</p>
               </div>
