@@ -11,13 +11,10 @@ dotenv.config();
 
 const app = express();
 
-// ======================
-// PORT (Railway safe)
-// ======================
 const PORT = process.env.PORT || 8080;
 
 // ======================
-// CORS CONFIG (FIXED)
+// CORS CONFIG (FIXED STABLE)
 // ======================
 app.use(cors({
   origin: [
@@ -35,7 +32,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ======================
-// SESSION CONFIG (FIXED)
+// SESSION CONFIG (FIX LOGIN FIX)
 // ======================
 app.use(session({
   secret: process.env.SESSION_SECRET || 'secret',
@@ -43,14 +40,14 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'none',
+    secure: true,          // MUST for Railway (HTTPS)
+    sameSite: "none",      // IMPORTANT for cross-domain (Firebase)
     maxAge: 1000 * 60 * 60 * 24 // 1 day
   }
 }));
 
 // ======================
-// PASSPORT SETUP
+// PASSPORT
 // ======================
 require('./config/passport')(passport);
 app.use(passport.initialize());
@@ -79,7 +76,7 @@ app.use((err, req, res, next) => {
 });
 
 // ======================
-// START SERVER (RAILWAY SAFE)
+// START SERVER
 // ======================
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
